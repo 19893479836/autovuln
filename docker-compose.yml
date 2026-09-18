@@ -1,0 +1,18 @@
+services:
+  autovuln:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: autovuln
+    ports:
+      - "8000:8000"
+    environment:
+      # SECRET_KEY 建议显式设置；留空或使用示例值时，应用会自动生成并持久化到 data/secret.key
+      - SECRET_KEY=${SECRET_KEY:-}
+      - SCAN_CONCURRENCY=${SCAN_CONCURRENCY:-4}
+      - DEFAULT_RATE_LIMIT=${DEFAULT_RATE_LIMIT:-0.3}
+      - WEBHOOK_URL=${WEBHOOK_URL:-}
+    volumes:
+      # 数据库 / 证据 / 导出报告 全部持久化
+      - ./backend/data:/app/data
+    restart: unless-stopped

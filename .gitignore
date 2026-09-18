@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# 数据（运行时生成）
+backend/data/*.db
+backend/data/*.sqlite3
+backend/data/secret.key
+backend/data/exports/*
+backend/data/evidence/*
+
+# Node
+node_modules/
+frontend/dist/
+npm-debug.log*
+
+# 环境变量
+.env
+
+# 日志（含请求路径/token，不应公开）
+*.log
+
+# 本地调试截图（无文档价值，含内部调试信息）
+docs/debug/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 系统
+.DS_Store
+Thumbs.db

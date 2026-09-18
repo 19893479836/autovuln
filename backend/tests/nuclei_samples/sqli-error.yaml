@@ -1,0 +1,17 @@
+id: sqli-error-detector
+info:
+  name: SQL Injection Error Detector
+  severity: high
+  description: 检测报错型 SQL 注入特征
+  reference:
+    - https://github.com/projectdiscovery/nuclei
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/products?id=1' AND '1'='1"
+    matchers:
+      - type: word
+        words:
+          - "syntax error"
+          - "SQLSTATE"
+          - "unterminated quoted string"

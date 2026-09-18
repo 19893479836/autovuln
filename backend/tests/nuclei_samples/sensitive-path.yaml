@@ -1,0 +1,13 @@
+id: sensitive-path-detector
+info:
+  name: Sensitive Path Exposure
+  severity: medium
+  description: 检测敏感路径可访问（返回 200）
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/backup.zip"
+    matchers:
+      - type: status
+        status:
+          - 200

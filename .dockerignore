@@ -1,0 +1,17 @@
+# 依赖与构建产物
+node_modules
+frontend/dist
+
+# 运行时数据（容器内挂载卷）
+backend/data/*.db
+backend/data/exports
+backend/data/evidence
+backend/data/secret.key
+
+# 版本控制与日志
+.git
+.gitignore
+*.log
+.venv
+__pycache__
+*.pyc

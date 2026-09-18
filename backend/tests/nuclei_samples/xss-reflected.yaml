@@ -1,0 +1,16 @@
+id: xss-reflected-detector
+info:
+  name: Reflected XSS Detector
+  severity: medium
+  description: 检测反射型 XSS
+http:
+  - method: GET
+    path:
+      - "{{BaseURL}}/search?q=%3Cscript%3Ealert(1)%3C%2Fscript%3E"
+    matchers:
+      - type: word
+        words:
+          - "<script>alert(1)</script>"
+      - type: status
+        status:
+          - 200
