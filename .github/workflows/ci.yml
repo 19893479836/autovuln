@@ -19,22 +19,24 @@ jobs:
       - name: 安装依赖
         run: pip install -r backend/requirements.txt
 
-      - name: 启动后端
+      - name: 启动后端与靶场
         run: |
           cd backend
           nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
           cd ..
+          nohup python demo_vuln_app.py > demo_vuln_app.log 2>&1 &
+          echo "服务已启动"
 
-      - name: 等待后端就绪
+      - name: 等待服务就绪
         run: |
           for i in $(seq 1 30); do
-            if curl -sf http://127.0.0.1:8000/ > /dev/null 2>&1; then
-              echo "后端就绪"
-              exit 0
-            fi
+            ok=1
+            curl -sf http://127.0.0.1:8000/ > /dev/null 2>&1 || ok=0
+            curl -sf http://127.0.0.1:9090/ > /dev/null 2>&1 || ok=0
+            if [ $ok -eq 1 ]; then echo "后端+靶场就绪"; exit 0; fi
             sleep 2
           done
-          echo "后端未就绪"; cat backend/uvicorn.log; exit 1
+          echo "服务未就绪"; cat backend/uvicorn.log demo_vuln_app.log 2>/dev/null; exit 1
 
-      - name: 运行端到端测试（20 项闭环）
-        run: python backend/tests/e2e_smoke.py
+      - name: 运行端到端测试（20 项闭环，目标=本地靶场）
+        run: E2E_TARGET=http://127.0.0.1:9090 python backend/tests/e2e_smoke.py

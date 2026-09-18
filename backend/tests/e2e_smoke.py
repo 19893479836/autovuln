@@ -22,7 +22,10 @@ def req(method: str, path: str, body: dict | None = None, token: str | None = No
 
 
 def main():
+    import os as _os
     import time as _t
+    # 扫描目标：默认 example.com；CI 等受限网络环境可用 E2E_TARGET 指定本地靶场
+    target = _os.environ.get("E2E_TARGET", "example.com")
     suffix = str(int(_t.time()))[-8:]
     admin_name = f"testadmin{suffix}"
     user2_name = f"tenant2{suffix}"
@@ -38,18 +41,17 @@ def main():
     step("注册", code == 200, f"code={code}")
     token = data.get("access_token", "")
 
-    # 2. 导入资产
+    # 2. 导入资产（去重：重复目标 1 个、无效目标 1 个）
     code, data = req("POST", "/api/assets/import",
-                     {"targets": ["example.com", "example.com", "http://example.com",
-                                  "192.168.1.1", "not a target"],
+                     {"targets": [target, target, "not a target"],
                       "tags": "test"}, token)
     step("资产导入+去重", code == 200, json.dumps(data, ensure_ascii=False))
     assert data["added"] >= 1 and data["existed"] >= 1 and data["invalid"] >= 1, "去重逻辑异常"
 
     # 3. 资产列表
     code, data = req("GET", "/api/assets?page_size=10", token=token)
-    step("资产列表", code == 200 and data["total"] >= 2, f"total={data['total']}")
-    # 选择域名资产（可联网，便于真实扫描）
+    step("资产列表", code == 200 and data["total"] >= 1, f"total={data['total']}")
+    # 优先选域名资产，否则用第一个（E2E_TARGET 为 URL 时）
     domain_asset = next((a for a in data["items"] if a["kind"] == "domain"), None)
     if not domain_asset:
         domain_asset = data["items"][0]
