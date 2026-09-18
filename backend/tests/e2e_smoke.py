@@ -33,7 +33,8 @@ def main():
 
     # 1. 注册
     code, data = req("POST", "/api/auth/register",
-                     {"username": admin_name, "email": f"{admin_name}@t.com", "password": "test123456"})
+                     {"username": admin_name, "email": f"{admin_name}@t.com",
+                      "password": "test123456", "invite_code": "autovuln2026"})
     step("注册", code == 200, f"code={code}")
     token = data.get("access_token", "")
 
@@ -112,7 +113,8 @@ def main():
 
     # 11. 多租户隔离测试
     code, _ = req("POST", "/api/auth/register",
-                  {"username": user2_name, "email": f"{user2_name}@t.com", "password": "test123456"})
+                  {"username": user2_name, "email": f"{user2_name}@t.com",
+                   "password": "test123456", "invite_code": "autovuln2026"})
     _, d6 = req("POST", "/api/auth/login", {"username": user2_name, "password": "test123456"})
     token2 = d6.get("access_token", "")
     code, d7 = req("GET", "/api/assets", token=token2)

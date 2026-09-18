@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 安装依赖
+        run: pip install -r backend/requirements.txt
+
+      - name: 启动后端
+        run: |
+          cd backend
+          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          cd ..
+
+      - name: 等待后端就绪
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:8000/ > /dev/null 2>&1; then
+              echo "后端就绪"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "后端未就绪"; cat backend/uvicorn.log; exit 1
+
+      - name: 运行端到端测试（20 项闭环）
+        run: python backend/tests/e2e_smoke.py
