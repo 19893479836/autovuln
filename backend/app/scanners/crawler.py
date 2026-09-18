@@ -30,17 +30,18 @@ class ReconCrawlerScanner(BaseScanner):
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
-            self.mark_failed("Playwright 未安装，请执行: pip install playwright && playwright install chromium")
+            # 可选依赖降级：未装 Playwright 时跳过动态爬虫，不阻塞整条流水线
+            self.log("动态爬虫跳过：未安装 Playwright（pip install playwright && playwright install chromium）")
             return
 
         self.log(f"动态爬虫: {base}" + ("(认证态)" if cookie else ""))
         try:
             self._crawl(base, cookie)
         except Exception as e:
-            # 浏览器可用性问题（未装 chromium 等）标记失败，其余按进度继续
+            # 浏览器可用性问题（未装 chromium 等）降级跳过，不阻塞整条流水线
             msg = str(e)
             if "Executable doesn't exist" in msg or "browser_type" in msg.lower():
-                self.mark_failed(f"Chromium 未安装，请执行: playwright install chromium ({msg[:120]})")
+                self.log(f"动态爬虫跳过：Chromium 未安装（playwright install chromium），{msg[:120]}")
             else:
                 self.log(f"爬虫异常: {msg[:200]}")
 
@@ -59,7 +60,7 @@ class ReconCrawlerScanner(BaseScanner):
             try:
                 browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
             except Exception as e:
-                self.mark_failed(f"Chromium 启动失败: {str(e)[:200]}")
+                self.log(f"动态爬虫跳过：Chromium 启动失败 {str(e)[:200]}")
                 return
             try:
                 ctx = browser.new_context(

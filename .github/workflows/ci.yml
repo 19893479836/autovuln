@@ -17,7 +17,9 @@ jobs:
           cache: 'pip'
 
       - name: 安装依赖
-        run: pip install -r backend/requirements.txt
+        run: |
+          pip install -r backend/requirements.txt
+          playwright install chromium --with-deps
 
       - name: 启动服务并运行端到端测试
         run: |
