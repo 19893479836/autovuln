@@ -72,6 +72,8 @@ def main():
             break
     step("扫描完成", data.get("state") == "completed",
          f"state={data.get('state')} progress={data.get('progress')} stage={data.get('stage')}")
+    if data.get("state") != "completed":
+        print(f"    !!! error_msg={data.get('error_msg')}")
 
     # 6. 漏洞列表
     code, data = req("GET", "/api/vulns?page_size=50", token=token)
@@ -99,6 +101,8 @@ def main():
         if d2.get("state") in ("completed", "failed", "cancelled"):
             break
     step("第二轮扫描", d2.get("state") == "completed", f"round={d2.get('round_no')}")
+    if d2.get("state") != "completed":
+        print(f"    !!! 第二轮 error_msg={d2.get('error_msg')}")
     code, d3 = req("POST", f"/api/vulns/round-compare?asset_id={asset_id}",
                    {"round_a": 1, "round_b": 2}, token)
     step("轮次对比", code == 200, json.dumps(d3.get("summary"), ensure_ascii=False))
