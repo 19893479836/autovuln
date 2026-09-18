@@ -19,24 +19,28 @@ jobs:
       - name: 安装依赖
         run: pip install -r backend/requirements.txt
 
-      - name: 启动后端与靶场
+      - name: 启动服务并运行端到端测试
         run: |
+          # 同一 step 内启动（后台进程跨 step 会被 runner 清理）+ 等待 + 测试
           cd backend
-          nohup python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
+          python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 > uvicorn.log 2>&1 &
           cd ..
-          nohup python demo_vuln_app.py > demo_vuln_app.log 2>&1 &
-          echo "服务已启动"
+          python demo_vuln_app.py > demo_vuln_app.log 2>&1 &
 
-      - name: 等待服务就绪
-        run: |
           for i in $(seq 1 30); do
             ok=1
             curl -sf http://127.0.0.1:8000/ > /dev/null 2>&1 || ok=0
             curl -sf http://127.0.0.1:9090/ > /dev/null 2>&1 || ok=0
-            if [ $ok -eq 1 ]; then echo "后端+靶场就绪"; exit 0; fi
+            [ $ok -eq 1 ] && break
             sleep 2
           done
-          echo "服务未就绪"; cat backend/uvicorn.log demo_vuln_app.log 2>/dev/null; exit 1
 
-      - name: 运行端到端测试（20 项闭环，目标=本地靶场）
-        run: E2E_TARGET=http://127.0.0.1:9090 python backend/tests/e2e_smoke.py
+          echo "--- uvicorn.log ---"
+          tail -20 backend/uvicorn.log 2>/dev/null || echo "(无日志)"
+          echo "--- demo_vuln_app.log ---"
+          tail -20 demo_vuln_app.log 2>/dev/null || echo "(无日志)"
+
+          curl -sf http://127.0.0.1:8000/ > /dev/null 2>&1 || { echo "后端未就绪"; exit 1; }
+          curl -sf http://127.0.0.1:9090/ > /dev/null 2>&1 || { echo "靶场未就绪"; exit 1; }
+
+          E2E_TARGET=http://127.0.0.1:9090 python backend/tests/e2e_smoke.py
